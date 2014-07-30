@@ -116,8 +116,8 @@ tm.define("GameScene", {
 		this.addChild(label);
 
 		// 敵のコレクションを生成
-		this.enemyGroup = tm.app.CanvasElement();
-		this.addChild(this.enemyGroup);
+		// this.enemyGroup = tm.app.CanvasElement();
+		// this.addChild(this.enemyGroup);
 
 		// Timer描画
 		Timer().addChildTo(this);
@@ -141,6 +141,8 @@ tm.define("GameScene", {
 				var enemy = Enemy().addChildTo(this);
 			// }
 		}
+
+		// TODO 敵の削除
 		
 	}
 });
@@ -191,14 +193,13 @@ tm.define("Enemy", {
 				scaleY:1.7,
 				x:SCREEN_CENTER_X,
 				y:SCREEN_CENTER_Y
-			}, 1000, this.removeEnemy(this))
+			}, 1000)
+			.call(function(){
+				// 自分自身を破棄
+				this.remove();
+				delete this;
+			}.bind(this))
 		;
-	},
-	
-	removeEnemy: function(obj){
-		console.log("[Enemy] removeEnemy");
-		delete obj;
-		obj = null;
 	}
 });
 
