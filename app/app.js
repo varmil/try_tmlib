@@ -10,17 +10,27 @@ _.mixin(_.str.exports());
 /*
  * ディスプレイ定数
  */
-const SCREEN_WIDTH	= 640;			  // スクリーン幅
-const SCREEN_HEIGHT	= 960;			  // スクリーン高さ
+const SCREEN_WIDTH    = 640;			  // スクリーン幅
+const SCREEN_HEIGHT   = 960;			  // スクリーン高さ
 const SCREEN_CENTER_X = SCREEN_WIDTH/2;   // スクリーン幅の半分
 const SCREEN_CENTER_Y = SCREEN_HEIGHT/2;  // スクリーン高さの半分
 
 // User定義パラメータ
-const POP_TIME_SEC          = 1.0;	// 敵のポップ時間
-const MAX_ENEMY             = 10;	// 画面内にいくつまで敵を描画するか
-const CONTROLLER_Y_POINT    = SCREEN_HEIGHT-100;	// コントロールバーのY座標
-const PLAYER_Y_POINT        = SCREEN_HEIGHT-200;	// プレイヤーアイコンのY座標
-const TIMER_Y_POINT         = 55;	// タイマーのY座標
+const CONTROLLER_Y_POINT    = SCREEN_HEIGHT-100;  // コントロールバーのY座標
+const PLAYER_Y_POINT        = SCREEN_HEIGHT-200;  // プレイヤーアイコンのY座標
+const TIMER_Y_POINT         = 55;  // タイマーのY座標
+
+// 基本150msの倍数で敵の動きは制御する。
+const NEXT_PATTERN_INTERVAL   = 600; // ms
+const NORMAL_PATTERN_INTERVAL = 600; // ms
+const NARROW_PATTERN_INTERVAL = 300; // ms
+const RUSH_PATTERN_INTERVAL   = 150; // ms
+const NORMAL_PATTERN_ENEMY_COUNT   = 4;
+const NARROW_PATTERN_ENEMY_COUNT   = 4;
+const RUSH_PATTERN_ENEMY_COUNT     = 3;
+
+const ENEMY_HEAP_UP_DURATION  = 750;  // ms
+const ENEMY_MOVE_DURATION     = 1500; // ms
 
 // アセット
 const ASSETS = {
@@ -38,7 +48,7 @@ tm.main(function() {
 	app.resize(SCREEN_WIDTH, SCREEN_HEIGHT);
 	app.fitWindow();
 	app.background = "rgba(235, 235, 235, 1.0)";// 背景色
-	app.fps = 60;
+	app.fps = 55;
 	
 	// ローディング
 	var loadingScene = tm.app.LoadingScene({
@@ -109,7 +119,7 @@ tm.define("TitleScene", {
 tm.define("GameScene", {
 	superClass: "tm.app.Scene",
 	pattern: null, // Patternインスタンス
-	level: 1, // ゲームレベル
+	level: 0, // ゲームレベル(初回０。徐々に上がる？)
 	
 	init: function() {
 		this.superInit();
@@ -126,21 +136,20 @@ tm.define("GameScene", {
 		// Timer描画
 		Timer().addChildTo(this);
 		
-		// TODO 初回パターン生成。
-		this.pattern = Pattern(this.level).addChildTo(this);
+		// 初回パターン生成
+		this.createPattern(this);
 	},
 
 	update: function(app) {
-		var time = (app.frame/app.fps);
-		// TODO 敵のPOP DELETE ME After.
-		// if (time % POP_TIME_SEC === 0){
-			// 敵の生成
-			// var enemy = Enemy().addChildTo(this);
-		// }
-		// TODO 一連のパターンが判定終了したら次のパターンへ。
-		if (this.pattern.ended_flag) {
-			this.pattern = Pattern(this.level).addChildTo(this);
+		// 一連のパターンが判定終了したら、インターバルを置いた後、次のパターンへ。
+		if (this.pattern && this.pattern.ended_flag) {
+			this.pattern = null;
+			setTimeout(this.createPattern, NEXT_PATTERN_INTERVAL, this);
 		}
+	},
+
+	createPattern: function(obj) {
+		obj.pattern = Pattern(obj.level).addChildTo(obj);
 	}
 });
 
@@ -157,16 +166,15 @@ tm.define("GameScene", {
  * Enemyの生成開始タイミングをずらすことで各Waveの間隔を演出
  */
 tm.define("Pattern", {
-    superClass: "tm.app.Object2D",
+	superClass: "tm.app.Object2D",
 	ended_flag: false,
 	patternNum: 0,
 	popPosition: 0,
 
-    init: function(level) {
+	init: function(level) {
 		this.superInit();
 
-		// DEBUG とりあえずデフォルト値を返す。実装できたらコメントアウト外す
-		// this.patternNum  = tm.util.Random.randint(0, 2);
+		this.patternNum  = tm.util.Random.randint(0, 2);
 		this.popPosition = tm.util.Random.randint(0, 1);
 		
 		switch(this.patternNum){
@@ -187,20 +195,65 @@ tm.define("Pattern", {
 	},
 
 	createNormal: function(level){
-		var i;
-		// TODO 時間差をつけて生成
-		for (i=0; i<level+3; i++){
-			Enemy(this.patternNum, this.popPosition).addChildTo(this);
+		var i = level + NORMAL_PATTERN_ENEMY_COUNT;
+		var _this = this;
+
+		// 時間差をつけて生成
+		function popEnemy(){
+			if (i == 0) {
+				_this.ended_flag = true; // 次のパターン生成を許可
+				return;
+			}
+			i--;
+			Enemy(_this.patternNum, _this.popPosition).addChildTo(_this);
+			setTimeout(function(){popEnemy(level)}, NORMAL_PATTERN_INTERVAL);
 		}
+		popEnemy();
 	},
 
 	createNarrow: function(level){
-	
+		var i = level + NARROW_PATTERN_ENEMY_COUNT;
+		var _this = this;
+
+		// 時間差をつけて生成
+		function popEnemy(){
+			if (i == 0) {
+				_this.ended_flag = true; // 次のパターン生成を許可
+				return;
+			}
+			i--;
+			Enemy(_this.patternNum, _this.popPosition).addChildTo(_this);
+			setTimeout(function(){popEnemy(level)}, NARROW_PATTERN_INTERVAL);
+		}
+		popEnemy();
 	},
 
 	createRush: function(level){
-	
+		var i = level + RUSH_PATTERN_ENEMY_COUNT;
+		var _this = this;
+
+		// 時間差をつけて生成
+		function popEnemy(){
+			if (i == 0) {
+				_this.ended_flag = true; // 次のパターン生成を許可
+				return;
+			}
+			i--;
+			_this.switchPopPosition();
+			Enemy(_this.patternNum, _this.popPosition).addChildTo(_this);
+			setTimeout(function(){popEnemy(level)}, RUSH_PATTERN_INTERVAL);
+		}
+		popEnemy();
 	},
+
+	// 左右交互にEnemyがpopするよう
+	switchPopPosition: function() {
+		if (this.popPosition === 0) {
+			this.popPosition = 1;
+		} else if (this.popPosition === 1) {
+			this.popPosition = 0;
+		}
+	}
 });
 /*
  * Enemy
@@ -208,31 +261,27 @@ tm.define("Pattern", {
  * @param int left or right (出現位置)
  */
 tm.define("Enemy", {
-    superClass: "tm.app.Shape",
+	superClass: "tm.app.Shape",
 
-    init: function(patternNum, popPosition) {
+	init: function(patternNum, popPosition) {
 		var width = 500, height = 500;
-        this.superInit(width, height);
+		this.superInit(width, height);
 
 		// 開始時座標
-		this.x = -width/4;
-		this.y = -height/4;
-		// 移動量をランダムで決定。
-		// this.vx = tm.util.Random.randint(1, 7);
-		// this.vy = tm.util.Random.randint(1, 7);
+		this.x = (popPosition === 0) ? 0 - width/5 : SCREEN_WIDTH + width/5;
+		this.y = -height/2;
 
 		// HSL色空間においてランダム色を作る
 		var angle = tm.util.Random.randint(0, 360);
 		var param = {
 			fillStyle: "transparent",
 			strokeStyle: "hsl({0}, 80%, 70%)".format(angle),
-			lineWidth: "13",
+			lineWidth: "10",
 		};
 		// 円描画
 		this.renderCircle(param);
 		this.setInteractive(true);
 
-		// TODO Animation
 		this.moveEnemy();
 	},
 	
@@ -242,14 +291,14 @@ tm.define("Enemy", {
 	moveEnemy: function() {
 		// TODO 敵の移動
 		this.tweener
-            .clear()
-            .to({scaleX:1.2, scaleY:1.2}, 600)
-            .to({
+			.clear()
+			.to({y: -100}, ENEMY_HEAP_UP_DURATION)
+			.to({
 				scaleX:5,
-				scaleY:3,
+				scaleY:4,
 				x:SCREEN_CENTER_X,
 				y:SCREEN_CENTER_Y
-			}, 1000)
+			}, ENEMY_MOVE_DURATION)
 			.call(function(){
 				// 自分自身を破棄
 				this.remove();
@@ -263,9 +312,9 @@ tm.define("Enemy", {
  * Timer (カウントアップしていくやつ)
  */
 tm.define("Timer", {
-    superClass: "tm.app.Object2D",
+	superClass: "tm.app.Object2D",
 
-    init: function() {
+	init: function() {
 		this.superInit();
 
 		// 後から生成したモノがレイヤー上位ぽい
@@ -277,10 +326,10 @@ tm.define("Timer", {
  * Timerの数値部分
  */
 tm.define("TimerLabel", {
-    superClass: "tm.display.Label",
+	superClass: "tm.display.Label",
 	time_counter: 0,
 
-    init: function() {
+	init: function() {
 		this.superInit("0", /*fontSize =*/ 45);
 
 		// タイマーラベル
@@ -294,7 +343,7 @@ tm.define("TimerLabel", {
 	},
 
 	update: function(app) {
-        // タイマー更新
+		// タイマー更新
 		var time  = (this.time_counter/app.fps);
 		this.text = _.numberFormat(time, 2);
 		this.time_counter++;
@@ -304,9 +353,9 @@ tm.define("TimerLabel", {
  * Timerの背景部分
  */
 tm.define("TimerBG", {
-    superClass: "tm.display.RectangleShape",
+	superClass: "tm.display.RectangleShape",
 
-    init: function() {
+	init: function() {
 		// タイマーの背景
 		var angle = tm.util.Random.randint(0, 360);
 		var param = {
@@ -326,9 +375,9 @@ tm.define("TimerBG", {
  * Player (ビートするやつ)
  */
 tm.define("Player", {
-    superClass: "tm.display.TriangleShape",
+	superClass: "tm.display.TriangleShape",
 
-    init: function() {
+	init: function() {
 		var width = 100, height = 100;
 		var angle = tm.util.Random.randint(0, 360);
 		var param = {
@@ -336,7 +385,7 @@ tm.define("Player", {
 			strokeStyle: "hsl({0}, 40%, 35%)".format(angle),
 			lineWidth: "2",
 		};
-        this.superInit(width, height, param);
+		this.superInit(width, height, param);
 		this.x = SCREEN_CENTER_X;
 		this.y = PLAYER_Y_POINT;
 
@@ -363,9 +412,9 @@ tm.define("Player", {
  * Controller (入力部分)
  */
 tm.define("Controller", {
-    superClass: "tm.app.Object2D",
+	superClass: "tm.app.Object2D",
 
-    init: function() {
+	init: function() {
 		this.superInit();
 
 		// 背景
@@ -377,19 +426,19 @@ tm.define("Controller", {
  * プレイヤーが操作可能なポインター
  */
 tm.define("ControllerPointer", {
-    superClass: "tm.display.CircleShape",
+	superClass: "tm.display.CircleShape",
 
-    init: function() {
+	init: function() {
 		var width = 60, height = 60;
 		var param = {
 			fillStyle: "#f5f5f5",
-			strokeStyle: "hsl(150, 80%, 70%)",
-			lineWidth: "18",
+			strokeStyle: "hsl(250, 80%, 70%)",
+			lineWidth: "25",
 		};
-        this.superInit(width, height, param);
+		this.superInit(width, height, param);
 		this.y = CONTROLLER_Y_POINT;
 	},
-	
+
 	update: function(app) {
 		var p = app.pointing;
 		this.x = p.x;
@@ -403,9 +452,9 @@ tm.define("ControllerPointer", {
  * プレイヤーが操作可能な部分の背景
  */
 tm.define("ControllerBG", {
-    superClass: "tm.display.RectangleShape",
+	superClass: "tm.display.RectangleShape",
 
-    init: function() {
+	init: function() {
 		var angle = tm.util.Random.randint(0, 360);
 		var param = {
 			fillStyle: "hsla({0}, 80%, 70%, 0.3)".format(angle),
@@ -422,11 +471,11 @@ tm.define("ControllerBG", {
  * Excellent! Great! Good! Bad! とかのラベル表示
  */
 tm.define("PassionLabel", {
-    superClass: "tm.display.Label",
+	superClass: "tm.display.Label",
 	time_counter: 0,
 	display_sec: 1.0, // 表示時間
 
-    init: function() {
+	init: function() {
 		this.superInit("Excellent!", /*fontSize =*/ 20);
 
 		this
