@@ -32,6 +32,12 @@ const RUSH_PATTERN_ENEMY_COUNT     = 3;
 const ENEMY_HEAP_UP_DURATION  = 750;  // ms
 const ENEMY_MOVE_DURATION     = 1500; // ms
 
+const ENEMY_COLOR = {
+	"A": "hsl(120, 80%, 70%)",
+	"B": "hsl(240, 80%, 70%)",
+	"C": "hsl(360, 80%, 70%)"
+};
+
 // アセット
 const ASSETS = {
 	"profileIMG": "http://jsrun.it/assets/b/J/Y/F/bJYFb.jpg"
@@ -262,6 +268,7 @@ tm.define("Pattern", {
  */
 tm.define("Enemy", {
 	superClass: "tm.app.Shape",
+	color: null, // 自身の色情報を格納
 
 	init: function(patternNum, popPosition) {
 		var width = 500, height = 500;
@@ -302,7 +309,6 @@ tm.define("Enemy", {
 			.call(function(){
 				// 自分自身を破棄
 				this.remove();
-				delete this;
 			}.bind(this))
 		;
 	}
@@ -376,6 +382,7 @@ tm.define("TimerBG", {
  */
 tm.define("Player", {
 	superClass: "tm.display.TriangleShape",
+	color: null, // Controllerのcolorに対応
 
 	init: function() {
 		var width = 100, height = 100;
@@ -394,6 +401,7 @@ tm.define("Player", {
 	},
 	
 	update: function(app) {
+		// TODO colorを格納
 	},
 	
 	beat: function(){
@@ -413,14 +421,18 @@ tm.define("Player", {
  */
 tm.define("Controller", {
 	superClass: "tm.app.Object2D",
+	color: null, // Pointerが乗っているcolorを格納
 
 	init: function() {
 		this.superInit();
 
-		// 背景
 		ControllerBG().addChildTo(this);
 		ControllerPointer().addChildTo(this);
-	}
+	},
+
+	update: function() {
+		// TODO colorを格納
+	},
 });
 /*
  * プレイヤーが操作可能なポインター
@@ -452,17 +464,33 @@ tm.define("ControllerPointer", {
  * プレイヤーが操作可能な部分の背景
  */
 tm.define("ControllerBG", {
-	superClass: "tm.display.RectangleShape",
+	superClass: "tm.app.Object2D",
 
 	init: function() {
-		var angle = tm.util.Random.randint(0, 360);
+		this.superInit();
+
+		ControllerBGPiece(ENEMY_COLOR.A, 0).addChildTo(this);
+		ControllerBGPiece(ENEMY_COLOR.B, 1).addChildTo(this);
+		ControllerBGPiece(ENEMY_COLOR.C, 2).addChildTo(this);
+	}
+});
+/*
+ * プレイヤーが操作可能な部分の背景の破片。とりあえず３つと決め打ち
+ * @param color: 背景色
+ * @param position: int 小さいほど左に位置する
+ */
+tm.define("ControllerBGPiece", {
+	superClass: "tm.display.RectangleShape",
+
+	init: function(color, position) {
 		var param = {
-			fillStyle: "hsla({0}, 80%, 70%, 0.3)".format(angle),
+			fillStyle: color,
 			strokeStyle: "transparent",
 			lineWidth: "0",
 		};
-		this.superInit(SCREEN_WIDTH, 20, param);
+		this.superInit(SCREEN_WIDTH/3, 20, param);
 		this.originX = 0;
+		this.x = SCREEN_WIDTH/3 * position;
 		this.y = CONTROLLER_Y_POINT;
 	}
 });
