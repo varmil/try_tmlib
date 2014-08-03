@@ -54,13 +54,13 @@ const FONT_LOBSTER     = "'Lobster' 'cursive'";
 
 // アセット
 const ASSETS = {
-	"bgTitle": "./assets/img/bgTitle.jpg",
-	"bgGame" : "./assets/img/bgGame.jpg"
+	bgTitle  : "./assets/img/bgTitle.jpg",
+	bgGame   : "./assets/img/bgGame.jpg",
+	bgmTitle : "./assets/sound/221.mp3",
+	bgmGame  : "./assets/sound/091.mp3",
 };
 
 const SOUNDS = {
-	bgmTitle : "./assets/sound/221.mp3",
-	bgmGame  : "./assets/sound/091.mp3",
 	seAttack : "./assets/sound/se_048.mp3",
 };
 
@@ -71,8 +71,8 @@ tm.main(function() {
 	var app = tm.display.CanvasApp("#world");
 	app.resize(SCREEN_WIDTH, SCREEN_HEIGHT);
 	app.fitWindow();
-	app.background = "rgba(235, 235, 235, 1.0)";// 背景色
-	app.fps = 65;
+	app.background = "rgba(200, 200, 200, 1.0)";// 背景色
+	app.fps = 60;
 
 	// ローディング
 	var loadingScene = tm.app.LoadingScene({
@@ -167,8 +167,9 @@ tm.define("TitleScene", {
 		tm.display.Sprite("bgTitle", SCREEN_WIDTH, SCREEN_HEIGHT).setOrigin(0,0).addChildTo(this);
 		
 		// BGM 再生
-		boombox.get('bgmTitle').setLoop(boombox.LOOP_NATIVE);
-		boombox.get('bgmTitle').play();
+		var bgm = tm.asset.AssetManager.get("bgmTitle").play();
+		bgm.loop   = true;
+		bgm.volume = 0.2;
 
 		this.fromJSON({
 			children: [
@@ -201,7 +202,7 @@ tm.define("TitleScene", {
 
 	update: function(app) {
 		if (app.pointing.getPointing()) {
-			boombox.get('bgmTitle').stop();
+			tm.asset.AssetManager.get("bgmTitle").stop();
 			this.app.replaceScene(GameScene());
 		}
 	}
@@ -221,8 +222,9 @@ tm.define("GameScene", {
 		// 背景適用
 		tm.display.Sprite("bgGame", SCREEN_WIDTH, SCREEN_HEIGHT).setOrigin(0,0).addChildTo(this);
 
-		boombox.get('bgmGame').setLoop(boombox.LOOP_NATIVE);
-		boombox.get('bgmGame').play();
+		var bgm = tm.asset.AssetManager.get("bgmGame").play();
+		bgm.loop   = true;
+		bgm.volume = 0.2;
 
 		// Player描画(Enemyとの衝突判定で使うのでグローバルに持つ、バッドだな...)
 		// 実質Singletonみたいなもの。
@@ -439,11 +441,6 @@ tm.define("Enemy", {
 				x: SCREEN_CENTER_X,
 				y: SCREEN_CENTER_Y
 			}, this.getMoveDuration(patternNum))
-/* 			.call(function(){
-				// 自分自身を破棄
-				console.log("remove");
-				this.remove();
-			}.bind(this)) */
 		;
 	},
 
@@ -661,7 +658,7 @@ tm.define("PlayerIcon", {
 	die: function(app) {
 		this.isDead = true;
 		this.tweener.pause();
-		boombox.get('bgmGame').stop();
+		tm.asset.AssetManager.get("bgmGame").stop();
 
 		// 死んだ際のアニメーション
 		var tween = tm.anim.Tween();
