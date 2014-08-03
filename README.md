@@ -2,6 +2,12 @@
 
 ## Wave Fever
 
+### Install
+* `npm install`
+* `gulp`
+
+
+
 ### Try tmlib.js !!
 * Wave Weaver のパロディっぽいやつをさくっと作ってみよう
 * ネイティブをどの程度Canvasで再現できるかの実験も含めて。
