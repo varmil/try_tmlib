@@ -1,7 +1,5 @@
-// forked from phi's "template - tmlib.js 0.2.2" http://jsdo.it/phi/yRg0
-// forked from phi's "template - tmlib.js 0.1.7" http://jsdo.it/phi/m68l
 /*
- * tmlib.js 0.2.0
+ * Use tmlib.js 0.3.0
  */
 
  //  Integrate with Underscore.js without module loading
@@ -54,8 +52,8 @@ const FONT_LOBSTER     = "'Lobster' 'cursive'";
 
 // アセット
 const ASSETS = {
-	"bgTitle": "./assets/img/bgTitle.jpg",
-	"bgGame" : "./assets/img/bgGame.jpg"
+	bgTitle : "./assets/img/bgTitle.jpg",
+	bgGame  : "./assets/img/bgGame.jpg"
 };
 
 const SOUNDS = {
@@ -71,7 +69,7 @@ tm.main(function() {
 	var app = tm.display.CanvasApp("#world");
 	app.resize(SCREEN_WIDTH, SCREEN_HEIGHT);
 	app.fitWindow();
-	app.background = "rgba(235, 235, 235, 1.0)";// 背景色
+	app.background = "rgba(200, 200, 200, 1.0)";// 背景色
 	app.fps = 65;
 
 	// ローディング
@@ -439,11 +437,6 @@ tm.define("Enemy", {
 				x: SCREEN_CENTER_X,
 				y: SCREEN_CENTER_Y
 			}, this.getMoveDuration(patternNum))
-/* 			.call(function(){
-				// 自分自身を破棄
-				console.log("remove");
-				this.remove();
-			}.bind(this)) */
 		;
 	},
 
@@ -550,7 +543,6 @@ tm.define("Player", {
 	},
 
 	spatter: function(color) {
-		// TODO
 		this.particleList.show(color);
 	},
 
@@ -575,7 +567,6 @@ tm.define("ParticleList", {
 
 	show: function(color) {
 		_.each(this.children, function(c){
-			// TODO
 			c.show(color);
 		});
 	},
@@ -587,7 +578,7 @@ tm.define("Particle", {
 	superClass: "tm.display.CircleShape",
 
 	init: function() {
-		var radius = tm.util.Random.randint(5, 30);
+		var radius = tm.util.Random.randint(5, 20);
 		var param = {
 			fillStyle: "hsl(50, 80% ,70%)",
 		};
@@ -720,13 +711,10 @@ tm.define("ControllerPointer", {
 	},
 
 	update: function(app) {
-		var p = app.pointing;
-		this.x = p.x;
+		this.x = app.pointing.x;
 
-		// if (p.getPointing()) {
-			// 現在乗っているピースの色を格納
-			this.color = this.getLyingPieceColor();
-		// }
+		// 現在乗っているピースの色を格納
+		this.color = this.getLyingPieceColor();
 	},
 
 	// ピースが３つと想定
