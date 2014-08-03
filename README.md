@@ -5,6 +5,7 @@
 ### Install
 * `npm install`
 * `gulp`
+* `http://localhost:9999/index.html`
 
 
 
