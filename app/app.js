@@ -6,60 +6,60 @@
 _.mixin(_.str.exports()); 
 
 //ディスプレイ定数
-const SCREEN_WIDTH    = 648;			  // スクリーン幅
-const SCREEN_HEIGHT   = 1152;			  // スクリーン高さ
-const SCREEN_CENTER_X = SCREEN_WIDTH/2;   // スクリーン幅の半分
-const SCREEN_CENTER_Y = SCREEN_HEIGHT/2;  // スクリーン高さの半分
+var SCREEN_WIDTH    = 648; // スクリーン幅
+var SCREEN_HEIGHT   = 1152; // スクリーン高さ
+var SCREEN_CENTER_X = SCREEN_WIDTH/2;   // スクリーン幅の半分
+var SCREEN_CENTER_Y = SCREEN_HEIGHT/2;  // スクリーン高さの半分
 
 // User定義パラメータ
-const CONTROLLER_Y_POINT    = SCREEN_HEIGHT-250;  // コントロールバーのY座標
-const PLAYER_Y_POINT        = SCREEN_HEIGHT-350;  // プレイヤーアイコンのY座標
-const TIMER_Y_POINT         = 70;  // タイマーのY座標
-const LEVEL_Y_POINT         = CONTROLLER_Y_POINT+100;  // レベルポップ時のY座標
-const PLAYER_ICON_SIZE  = 100; 
-const SPATTER_DURATION  = 100; // ms
+var CONTROLLER_Y_POINT    = SCREEN_HEIGHT-250;  // コントロールバーのY座標
+var PLAYER_Y_POINT        = SCREEN_HEIGHT-350;  // プレイヤーアイコンのY座標
+var TIMER_Y_POINT         = 70;  // タイマーのY座標
+var LEVEL_Y_POINT         = CONTROLLER_Y_POINT+100;  // レベルポップ時のY座標
+var PLAYER_ICON_SIZE  = 100; 
+var SPATTER_DURATION  = 100; // ms
 
-const LEVEL_FADEOUT_DURATION       = 3000; // ms
-const PLAYER_DIE_ANIM_DURATION     = 1500; // ms
+var LEVEL_FADEOUT_DURATION       = 3000; // ms
+var PLAYER_DIE_ANIM_DURATION     = 1500; // ms
 
 // 敵の動きのスピード制御
-const NEXT_PATTERN_INTERVAL   = 800; // ms
-const NORMAL_PATTERN_INTERVAL = 600; // ms
-const NARROW_PATTERN_INTERVAL = 300; // ms
-const RUSH_PATTERN_INTERVAL   = 350; // ms
-const NORMAL_PATTERN_ENEMY_COUNT   = 4;
-const NARROW_PATTERN_ENEMY_COUNT   = 4;
-const RUSH_PATTERN_ENEMY_COUNT     = 3;
+var NEXT_PATTERN_INTERVAL   = 800; // ms
+var NORMAL_PATTERN_INTERVAL = 600; // ms
+var NARROW_PATTERN_INTERVAL = 300; // ms
+var RUSH_PATTERN_INTERVAL   = 350; // ms
+var NORMAL_PATTERN_ENEMY_COUNT   = 4;
+var NARROW_PATTERN_ENEMY_COUNT   = 4;
+var RUSH_PATTERN_ENEMY_COUNT     = 3;
 
-const ENEMY_HEAP_UP_DURATION  = 1500;  // ms
-const ENEMY_MOVE_DURATION     = 3000; // ms
+var ENEMY_HEAP_UP_DURATION  = 1500;  // ms
+var ENEMY_MOVE_DURATION     = 3000; // ms
 
-const PATTERN_NORMAL = 0;
-const PATTERN_NARROW = 1;
-const PATTERN_RUSH   = 2;
-const POP_POS_LEFT   = 0;
-const POP_POS_CENTER = 1;
-const POP_POS_RIGHT  = 2;
+var PATTERN_NORMAL = 0;
+var PATTERN_NARROW = 1;
+var PATTERN_RUSH   = 2;
+var POP_POS_LEFT   = 0;
+var POP_POS_CENTER = 1;
+var POP_POS_RIGHT  = 2;
 
-const ENEMY_COLOR = [
+var ENEMY_COLOR = [
 	"hsl(120, 80%, 70%)",
 	"hsl(240, 80%, 70%)",
 	"hsl(360, 80%, 70%)"
 ];
-const GIGANTIC = 4;
+var GIGANTIC = 4;
 
-const FONT_LOBSTER     = "'Lobster' 'cursive'";
+var FONT_LOBSTER     = "'Lobster' 'cursive'";
 
 // アセット
-const ASSETS = {
+var ASSETS = {
 	bgTitle : "./assets/img/bgTitle.jpg",
 	bgGame  : "./assets/img/bgGame.jpg"
 };
 
-const SOUNDS = {
+var SOUNDS = {
 	bgmTitle : "./assets/sound/221.mp3",
 	bgmGame  : "./assets/sound/091.mp3",
-	seAttack : "./assets/sound/se_048.mp3",
+	seAttack : "./assets/sound/se_048.mp3"
 };
 
 /*
@@ -77,7 +77,7 @@ tm.main(function() {
 		width: SCREEN_WIDTH,	// 幅
 		height: SCREEN_HEIGHT,	// 高さ
 		assets: ASSETS,			// アセット(必須)
-		nextScene: LoadingSoundsScene,	// ローディング完了後のシーン
+		nextScene: LoadingSoundsScene	// ローディング完了後のシーン
 	});
 	app.replaceScene(loadingScene);
 
@@ -95,7 +95,7 @@ tm.define("LoadingSoundsScene", {
 	init: function() {
 	var param = {
 		width: SCREEN_WIDTH,	// 幅
-		height: SCREEN_HEIGHT,	// 高さ
+		height: SCREEN_HEIGHT	// 高さ
 	};
 		this.superInit(param);
 		var _this = this;
@@ -149,7 +149,7 @@ tm.define("LoadingSoundsScene", {
 		});
 
 		return parentDeferred;
-	},
+	}
 });
 
 /*
@@ -299,7 +299,7 @@ tm.define("Pattern", {
 
 		// 時間差をつけて生成
 		function popEnemy(){
-			if (i == 0) {
+			if (i === 0) {
 				_this.ended_flag = true; // 次のパターン生成を許可
 				return;
 			}
@@ -317,7 +317,7 @@ tm.define("Pattern", {
 
 		// 時間差をつけて生成
 		function popEnemy(){
-			if (i == 0) {
+			if (i === 0) {
 				_this.ended_flag = true;
 				return;
 			}
@@ -335,7 +335,7 @@ tm.define("Pattern", {
 
 		// 時間差をつけて生成
 		function popEnemy(){
-			if (i == 0) {
+			if (i === 0) {
 				_this.ended_flag = true;
 				return;
 			}
@@ -349,7 +349,7 @@ tm.define("Pattern", {
 	},
 
 	createEnemyColorList: function(length) {
-		var result = [], i = k = 0;
+		var result = [], i = 0, k = 0;
 		// まず、何体ずつ同色にするか
 		var max = Math.ceil(4/length + length/8);
 		var sameColorLength = tm.util.Random.randint(1, max);
@@ -359,7 +359,7 @@ tm.define("Pattern", {
 			var color = 
 			_.chain(ENEMY_COLOR)
 			 .filter(function(c){return c !== color})
-			 .sample()
+             .sample()
 			 .value();
 			// 上で設定した数の倍数を超えるごとに、色をスイッチする。
 			for (k=0; k<sameColorLength; k++) {
@@ -548,7 +548,7 @@ tm.define("Player", {
 
 	update: function() {
 		this.playerIcon.color = this.controller.color;
-	},
+	}
 });
 /*
  * particleの固まりを格納する
@@ -569,7 +569,7 @@ tm.define("ParticleList", {
 		_.each(this.children, function(c){
 			c.show(color);
 		});
-	},
+	}
 });
 /*
  * Enemyを消した時に出るParticle
@@ -580,7 +580,7 @@ tm.define("Particle", {
 	init: function() {
 		var radius = tm.util.Random.randint(5, 20);
 		var param = {
-			fillStyle: "hsl(50, 80% ,70%)",
+			fillStyle: "hsl(50, 80% ,70%)"
 		};
 		this.superInit(radius, radius, param);
 
@@ -624,7 +624,7 @@ tm.define("PlayerIcon", {
 
 		// 目
 		var param = {
-			fillStyle: "#333", strokeStyle: "#f5f5f5", lineWidth: "6",
+			fillStyle: "#333", strokeStyle: "#f5f5f5", lineWidth: "6"
 		};
 		tm.display.CircleShape(30, 15, param).addChildTo(this);
 	},
@@ -634,7 +634,7 @@ tm.define("PlayerIcon", {
 		if (this.color !== this.current_color || this.current_color === null) {
 			this.current_color = this.color;
 			var param = {
-				fillStyle:  this.color,
+				fillStyle:  this.color
 			};
 			this.renderTriangle(param);
 		}
@@ -657,8 +657,7 @@ tm.define("PlayerIcon", {
 		// 死んだ際のアニメーション
 		var tween = tm.anim.Tween();
 		tween
-		  .to(this, {x:SCREEN_WIDTH+200, y:SCREEN_HEIGHT}, PLAYER_DIE_ANIM_DURATION)
-		;
+		  .to(this, {x:SCREEN_WIDTH+200, y:SCREEN_HEIGHT}, PLAYER_DIE_ANIM_DURATION);
 		tween.setTransition("easeInOutBack");
 		tween.onfinish = function() {
 			window.player.playerIcon.isGameOver = true;
@@ -689,7 +688,7 @@ tm.define("Controller", {
 
 	update: function() {
 		this.color = this.pointer.color;
-	},
+	}
 });
 /*
  * プレイヤーが操作可能なポインター
@@ -703,7 +702,7 @@ tm.define("ControllerPointer", {
 		var param = {
 			fillStyle: "#333",
 			strokeStyle: "#f5f5f5",
-			lineWidth: "20",
+			lineWidth: "20"
 		};
 		this.superInit(width, height, param);
 		this.y = CONTROLLER_Y_POINT;
@@ -754,7 +753,7 @@ tm.define("ControllerBGPiece", {
 		var param = {
 			fillStyle: color,
 			strokeStyle: "transparent",
-			lineWidth: "0",
+			lineWidth: "0"
 		};
 		this.superInit(SCREEN_WIDTH/3, 30, param);
 		this.originX = 0;
@@ -847,7 +846,7 @@ tm.define("GameOverScene", {
 			width: 300, height: 100,
 			bgColor: "#00aced",
 			text: "Tweet",
-			fontSize: 60, fontFamily: FONT_LOBSTER,
+			fontSize: 60, fontFamily: FONT_LOBSTER
 		};
 		var tweetButton = tm.ui.FlatButton(param).addChildTo(this);
 		tweetButton.x = SCREEN_CENTER_X;
@@ -859,7 +858,7 @@ tm.define("GameOverScene", {
 				type    : "tweet",
 				text    : "5秒で遊べるリズムゲーム『Wave Fever』\nLevel：【"+level+"】、Time：【"+time+"】でした。",
 				hashtags: "tmlib",
-				url     : "https://github.com/varmil/try_tmlib",
+				url     : "https://github.com/varmil/try_tmlib"
 			}), "_self");
 		});
 	},
@@ -871,7 +870,7 @@ tm.define("GameOverScene", {
 		var param = {
 			fillStyle   : "rgba(0, 0, 0, 0)",
 			strokeStyle : "rgba(0, 0, 0, 0)",
-			lineWidth   : 0,
+			lineWidth   : 0
 		};
 		var dummyButton = tm.display.RectangleShape(SCREEN_WIDTH,SCREEN_HEIGHT,param).addChildTo(this);
 		dummyButton.x = SCREEN_CENTER_X;
