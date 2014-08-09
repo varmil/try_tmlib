@@ -2,6 +2,8 @@
  * Use tmlib.js 0.3.0
  */
 
+(function() {
+
  //  Integrate with Underscore.js without module loading
 _.mixin(_.str.exports()); 
 
@@ -882,3 +884,5 @@ tm.define("GameOverScene", {
 		});
 	}
 });
+
+})();
