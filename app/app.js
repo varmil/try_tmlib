@@ -268,13 +268,13 @@ tm.define("GameScene", {
 
 		switch(patternNum){
 			case PATTERN_NORMAL:
-				this.pattern.createNormal(this.level, patternNum, popPosition);
+				this.pattern.createNormal(this.level, popPosition);
 				break;
 			case PATTERN_NARROW:
-				this.pattern.createNarrow(this.level, patternNum, popPosition);
+				this.pattern.createNarrow(this.level, popPosition);
 				break;
 			case PATTERN_RUSH:
-				this.pattern.createRush(this.level, patternNum, popPosition);
+				this.pattern.createRush(this.level, popPosition);
 				break;
 		}
 	}
@@ -292,7 +292,7 @@ tm.define("Pattern", {
 		this.superInit();
 	},
 
-	createNormal: function(level, patternNum, popPosition){
+	createNormal: function(level, popPosition){
 		var i = level + NORMAL_PATTERN_ENEMY_COUNT;
 		var _this = this;
 		var color = this.createEnemyColorList(i); // ["hsl(...)", "hsl(...)", ...]
@@ -304,13 +304,13 @@ tm.define("Pattern", {
 				return;
 			}
 			i--;
-			Enemy(patternNum, popPosition, color.shift()).addChildTo(_this);
+			Enemy(PATTERN_NORMAL, popPosition, color.shift()).addChildTo(_this);
 			setTimeout(function(){popEnemy(level)}, NORMAL_PATTERN_INTERVAL);
 		}
 		popEnemy();
 	},
 
-	createNarrow: function(level, patternNum, popPosition){
+	createNarrow: function(level, popPosition){
 		var i = level + NARROW_PATTERN_ENEMY_COUNT;
 		var _this = this;
 		var color = this.createEnemyColorList(i);
@@ -322,13 +322,13 @@ tm.define("Pattern", {
 				return;
 			}
 			i--;
-			Enemy(patternNum, popPosition, color.shift()).addChildTo(_this);
+			Enemy(PATTERN_NARROW, popPosition, color.shift()).addChildTo(_this);
 			setTimeout(function(){popEnemy(level)}, NARROW_PATTERN_INTERVAL);
 		}
 		popEnemy();
 	},
 
-	createRush: function(level, patternNum, popPosition){
+	createRush: function(level, popPosition){
 		var i = level + RUSH_PATTERN_ENEMY_COUNT;
 		var _this = this;
 		var color = this.createEnemyColorList(i);
@@ -342,7 +342,7 @@ tm.define("Pattern", {
 			i--;
 			// RUSHの場合ランダムでpop位置を取得
 			var popPosition = _.sample([POP_POS_LEFT, POP_POS_CENTER, POP_POS_RIGHT]);
-			Enemy(patternNum, popPosition, color.shift()).addChildTo(_this);
+			Enemy(PATTERN_RUSH, popPosition, color.shift()).addChildTo(_this);
 			setTimeout(function(){popEnemy(level)}, RUSH_PATTERN_INTERVAL);
 		}
 		popEnemy();
