@@ -5,7 +5,7 @@
 (function() {
 
  //  Integrate with Underscore.js without module loading
-_.mixin(_.str.exports()); 
+_.mixin(_.str.exports());
 
 //ディスプレイ定数
 var SCREEN_WIDTH    = 648; // スクリーン幅
@@ -18,7 +18,7 @@ var CONTROLLER_Y_POINT    = SCREEN_HEIGHT-250;  // コントロールバーのY�
 var PLAYER_Y_POINT        = SCREEN_HEIGHT-350;  // プレイヤーアイコンのY座標
 var TIMER_Y_POINT         = 70;  // タイマーのY座標
 var LEVEL_Y_POINT         = CONTROLLER_Y_POINT+100;  // レベルポップ時のY座標
-var PLAYER_ICON_SIZE  = 100; 
+var PLAYER_ICON_SIZE  = 100;
 var SPATTER_DURATION  = 100; // ms
 
 var LEVEL_FADEOUT_DURATION       = 3000; // ms
@@ -72,7 +72,7 @@ tm.main(function() {
 	app.resize(SCREEN_WIDTH, SCREEN_HEIGHT);
 	app.fitWindow();
 	app.background = "rgba(200, 200, 200, 1.0)";// 背景色
-	app.fps = 65;
+	app.fps = 60;
 
 	// ローディング
 	var loadingScene = tm.app.LoadingScene({
@@ -159,13 +159,13 @@ tm.define("LoadingSoundsScene", {
  */
 tm.define("TitleScene", {
 	superClass: "tm.app.Scene",
-	
+
 	init: function() {
 		this.superInit();
 
 		// 背景適用
 		tm.display.Sprite("bgTitle", SCREEN_WIDTH, SCREEN_HEIGHT).setOrigin(0,0).addChildTo(this);
-		
+
 		// BGM 再生
 		boombox.get('bgmTitle').setLoop(boombox.LOOP_NATIVE);
 		boombox.get('bgmTitle').play();
@@ -212,11 +212,14 @@ tm.define("TitleScene", {
  */
 tm.define("GameScene", {
 	superClass: "tm.app.Scene",
-	pattern: null, // Patternインスタンス
 	level: 0, // ゲームレベル(初回０。徐々に上がる)
-	
+
 	init: function() {
+		var self = this;
 		this.superInit();
+
+		this.stats = new Stats();
+		document.body.appendChild(this.stats.domElement);
 
 		// 背景適用
 		tm.display.Sprite("bgGame", SCREEN_WIDTH, SCREEN_HEIGHT).setOrigin(0,0).addChildTo(this);
@@ -227,40 +230,53 @@ tm.define("GameScene", {
 		// Player描画(Enemyとの衝突判定で使うのでグローバルに持つ、バッドだな...)
 		// 実質Singletonみたいなもの。
 		window.player = Player().addChildTo(this);
+		player.playerIcon.on('collision', function() {
+			player.playerIcon.off('collision');
+			// 間違った色に接触した瞬間にタイマーをストップする
+			self.timer.sleep();
+		});
+		player.playerIcon.on('dieAnimationEnd', function(e) {
+			player.playerIcon.off('dieAnimationEnd');
+			document.body.removeChild(self.stats.domElement);
+			self.app.replaceScene(GameOverScene(self.level, self.timer.label.text));
+		});
 
 		this.timer = Timer().addChildTo(this);
 		this.levelLabel = levelLabel().addChildTo(this);
-		
+		this.pattern = Pattern().addChildTo(this).on('popEnd', function(e) {
+			// 一連のパターンが終了したら、インターバルを置いた後、次のパターンへ。
+			setTimeout(_.bind(self.createPattern, self), NEXT_PATTERN_INTERVAL);
+		});
+
 		// 初回パターン生成
-		this.createPattern(this);
+		this.createPattern();
 	},
 
 	update: function(app) {
-		// 一連のパターンが判定終了したら、インターバルを置いた後、次のパターンへ。
-		if (this.pattern && this.pattern.ended_flag) {
-			this.pattern = null;
-			setTimeout(this.createPattern, NEXT_PATTERN_INTERVAL, this);
-		}
-
+		this.stats.update();
 		// 一定時間毎にレベルアップ
 		if (this.timer.label.text > this.level * 15 + 15) {
 			console.log("LevelUpTo:", this.level);
 			this.level = this.level + 1;
 			this.levelLabel.levelUp(this.level);
 		}
-
-		// ゲームオーバーチェック
-		if (window.player.playerIcon.isDead){
-			// 間違った色に接触した瞬間にタイマーをストップする
-			this.timer.sleep();
-		}
-		if (window.player.playerIcon.isGameOver){
-			app.replaceScene(GameOverScene(this.level, this.timer.label.text));
-		}
 	},
 
-	createPattern: function(obj) {
-		obj.pattern = Pattern(obj.level).addChildTo(obj);
+	createPattern: function() {
+		var patternNum  = tm.util.Random.randint(0, 2);
+		var popPosition = tm.util.Random.randint(POP_POS_LEFT, POP_POS_RIGHT);
+
+		switch(patternNum){
+			case PATTERN_NORMAL:
+				this.pattern.createNormal(this.level, patternNum, popPosition);
+				break;
+			case PATTERN_NARROW:
+				this.pattern.createNarrow(this.level, patternNum, popPosition);
+				break;
+			case PATTERN_RUSH:
+				this.pattern.createRush(this.level, patternNum, popPosition);
+				break;
+		}
 	}
 });
 
@@ -271,30 +287,12 @@ tm.define("GameScene", {
  */
 tm.define("Pattern", {
 	superClass: "tm.app.Object2D",
-	ended_flag: false,
-	patternNum: 0,
-	popPosition: 0,
 
-	init: function(level) {
+	init: function() {
 		this.superInit();
-
-		this.patternNum  = tm.util.Random.randint(0, 2);
-		this.popPosition = tm.util.Random.randint(POP_POS_LEFT, POP_POS_RIGHT);
-		
-		switch(this.patternNum){
-			case PATTERN_NORMAL:
-				this.createNormal(level);
-				break;
-			case PATTERN_NARROW:
-				this.createNarrow(level);
-				break;
-			case PATTERN_RUSH:
-				this.createRush(level);
-				break;
-		}
 	},
 
-	createNormal: function(level){
+	createNormal: function(level, patternNum, popPosition){
 		var i = level + NORMAL_PATTERN_ENEMY_COUNT;
 		var _this = this;
 		var color = this.createEnemyColorList(i); // ["hsl(...)", "hsl(...)", ...]
@@ -302,17 +300,17 @@ tm.define("Pattern", {
 		// 時間差をつけて生成
 		function popEnemy(){
 			if (i === 0) {
-				_this.ended_flag = true; // 次のパターン生成を許可
+				_this.flare('popEnd');
 				return;
 			}
 			i--;
-			Enemy(_this.patternNum, _this.popPosition, color.shift()).addChildTo(_this);
+			Enemy(patternNum, popPosition, color.shift()).addChildTo(_this);
 			setTimeout(function(){popEnemy(level)}, NORMAL_PATTERN_INTERVAL);
 		}
 		popEnemy();
 	},
 
-	createNarrow: function(level){
+	createNarrow: function(level, patternNum, popPosition){
 		var i = level + NARROW_PATTERN_ENEMY_COUNT;
 		var _this = this;
 		var color = this.createEnemyColorList(i);
@@ -320,17 +318,17 @@ tm.define("Pattern", {
 		// 時間差をつけて生成
 		function popEnemy(){
 			if (i === 0) {
-				_this.ended_flag = true;
+				_this.flare('popEnd');
 				return;
 			}
 			i--;
-			Enemy(_this.patternNum, _this.popPosition, color.shift()).addChildTo(_this);
+			Enemy(patternNum, popPosition, color.shift()).addChildTo(_this);
 			setTimeout(function(){popEnemy(level)}, NARROW_PATTERN_INTERVAL);
 		}
 		popEnemy();
 	},
 
-	createRush: function(level){
+	createRush: function(level, patternNum, popPosition){
 		var i = level + RUSH_PATTERN_ENEMY_COUNT;
 		var _this = this;
 		var color = this.createEnemyColorList(i);
@@ -338,13 +336,13 @@ tm.define("Pattern", {
 		// 時間差をつけて生成
 		function popEnemy(){
 			if (i === 0) {
-				_this.ended_flag = true;
+				_this.flare('popEnd');
 				return;
 			}
 			i--;
-			// ランダムでpop位置を取得
-			_this.popPosition = _.sample([POP_POS_LEFT, POP_POS_CENTER, POP_POS_RIGHT]);
-			Enemy(_this.patternNum, _this.popPosition, color.shift()).addChildTo(_this);
+			// RUSHの場合ランダムでpop位置を取得
+			var popPosition = _.sample([POP_POS_LEFT, POP_POS_CENTER, POP_POS_RIGHT]);
+			Enemy(patternNum, popPosition, color.shift()).addChildTo(_this);
 			setTimeout(function(){popEnemy(level)}, RUSH_PATTERN_INTERVAL);
 		}
 		popEnemy();
@@ -355,13 +353,13 @@ tm.define("Pattern", {
 		// まず、何体ずつ同色にするか
 		var max = Math.ceil(4/length + length/8);
 		var sameColorLength = tm.util.Random.randint(1, max);
-		
+
 		for (i=0; i<length; i++){
 			// 前回とは異なる色を作成
-			var color = 
+			var color =
 			_.chain(ENEMY_COLOR)
-			 .filter(function(c){return c !== color})
-             .sample()
+			 .filter(function(c){return c !== color;})
+			 .sample()
 			 .value();
 			// 上で設定した数の倍数を超えるごとに、色をスイッチする。
 			for (k=0; k<sameColorLength; k++) {
@@ -404,21 +402,21 @@ tm.define("Enemy", {
 
 		this.moveEnemy(patternNum);
 	},
-	
+
 	update: function(app) {
 		// 円と１点との衝突判定
 		if (this.isHitPointCircle(SCREEN_CENTER_X, PLAYER_Y_POINT-PLAYER_ICON_SIZE/2)){
 
 			// 死亡アニメーション中ならば何もしない
-			if (window.player.playerIcon.isDead) return;
-			
+			if (window.player.isDead) return;
+
 			if (this.color === window.player.playerIcon.color) {
 				// パーティクル生成
 				window.player.spatter(this.color);
 				boombox.get('seAttack').play();
-			} else { 
+			} else {
 				// 間違った色に触れた場合は死亡
-				window.player.playerIcon.die(app);
+				window.player.die();
 			}
 
 			// 一度、衝突したら自殺
@@ -426,7 +424,7 @@ tm.define("Enemy", {
 			delete this.color;
 		}
 	},
-	
+
 	moveEnemy: function(patternNum) {
 		// 敵の移動
 		this.tweener
@@ -533,6 +531,7 @@ tm.define("TimerBG", {
  */
 tm.define("Player", {
 	superClass: "tm.app.Object2D",
+	isDead: false,
 
 	init: function() {
 		this.superInit();
@@ -546,6 +545,11 @@ tm.define("Player", {
 
 	spatter: function(color) {
 		this.particleList.show(color);
+	},
+
+	die: function() {
+		this.isDead = true;
+		this.playerIcon.die();
 	},
 
 	update: function() {
@@ -613,8 +617,6 @@ tm.define("PlayerIcon", {
 	superClass: "tm.display.TriangleShape",
 	color: null, // Pointerのcolorに対応
 	current_color: null, // キャッシュ情報
-	isDead: false,
-	isGameOver: false,
 
 	init: function() {
 		this.superInit(PLAYER_ICON_SIZE, PLAYER_ICON_SIZE);
@@ -630,7 +632,7 @@ tm.define("PlayerIcon", {
 		};
 		tm.display.CircleShape(30, 15, param).addChildTo(this);
 	},
-	
+
 	update: function(app) {
 		// 現在のcolorと新しいcolorが違ったら色を変化
 		if (this.color !== this.current_color || this.current_color === null) {
@@ -641,7 +643,7 @@ tm.define("PlayerIcon", {
 			this.renderTriangle(param);
 		}
 	},
-	
+
 	beat: function(){
 		this.tweener
 			.to({scaleX:1.15, scaleY:1.15}, 500)
@@ -651,26 +653,27 @@ tm.define("PlayerIcon", {
 	},
 
 	// 死亡処理（ゲームオーバーへ）
-	die: function(app) {
-		this.isDead = true;
+	die: function() {
+		var self = this;
 		this.tweener.pause();
 		boombox.get('bgmGame').stop();
 
+		this.flare('collision');
+
 		// 死んだ際のアニメーション
 		var tween = tm.anim.Tween();
-		tween
-		  .to(this, {x:SCREEN_WIDTH+200, y:SCREEN_HEIGHT}, PLAYER_DIE_ANIM_DURATION);
-		tween.setTransition("easeInOutBack");
 		tween.onfinish = function() {
-			window.player.playerIcon.isGameOver = true;
-		};
-		tween.start();
+			self.flare('dieAnimationEnd');
+		}
+		tween
+			.to(this, {x:SCREEN_WIDTH+200, y:SCREEN_HEIGHT}, PLAYER_DIE_ANIM_DURATION)
+			.setTransition("easeInOutBack")
+			.start();
 
 		// 回転させながら。
 		this.tweener
 			.clear()
-			.to({rotation: this.rotation + 1000}, PLAYER_DIE_ANIM_DURATION)
-		;
+			.to({rotation: this.rotation + 1000}, PLAYER_DIE_ANIM_DURATION);
 	}
 });
 
@@ -798,7 +801,7 @@ tm.define("levelLabel", {
  */
 tm.define("GameOverScene", {
 	superClass: "tm.app.Scene",
-	
+
 	init: function(level, time) {
 		this.superInit();
 
