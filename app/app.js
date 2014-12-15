@@ -232,8 +232,10 @@ tm.define("GameScene", {
 		window.player = Player().addChildTo(this);
 		player.playerIcon.on('collision', function() {
 			player.playerIcon.off('collision');
-			// 間違った色に接触した瞬間にタイマーをストップする
+			self.timer.off('levelUp');
+			// 間違った色に接触した瞬間にタイマーをストップし、レベルアップカウントも停止
 			self.timer.sleep();
+			clearInterval(self.timer.intervalID);
 		});
 		player.playerIcon.on('dieAnimationEnd', function(e) {
 			player.playerIcon.off('dieAnimationEnd');
@@ -241,9 +243,15 @@ tm.define("GameScene", {
 			self.app.replaceScene(GameOverScene(self.level, self.timer.label.text));
 		});
 
-		this.timer = Timer().addChildTo(this);
+		this.timer = Timer().addChildTo(this).on('levelUp', function() {
+			self.level = self.level + 1;
+			self.levelLabel.levelUp(self.level);
+			console.log("LevelUpTo:", self.level);
+		});
+
 		this.levelLabel = levelLabel().addChildTo(this);
-		this.pattern = Pattern().addChildTo(this).on('popEnd', function(e) {
+
+		this.pattern = Pattern().addChildTo(this).on('popEnd', function() {
 			// 一連のパターンが終了したら、インターバルを置いた後、次のパターンへ。
 			setTimeout(_.bind(self.createPattern, self), NEXT_PATTERN_INTERVAL);
 		});
@@ -252,14 +260,8 @@ tm.define("GameScene", {
 		this.createPattern();
 	},
 
-	update: function(app) {
+	update: function() {
 		this.stats.update();
-		// 一定時間毎にレベルアップ
-		if (this.timer.label.text > this.level * 15 + 15) {
-			console.log("LevelUpTo:", this.level);
-			this.level = this.level + 1;
-			this.levelLabel.levelUp(this.level);
-		}
 	},
 
 	createPattern: function() {
@@ -468,13 +470,20 @@ tm.define("Enemy", {
  */
 tm.define("Timer", {
 	superClass: "tm.app.Object2D",
+	intervalID: 0,
 
 	init: function() {
+		var self = this;
 		this.superInit();
 
 		// 後から生成したモノがレイヤー上位ぽい
 		TimerBG().addChildTo(this);
 		this.label = TimerLabel().addChildTo(this);
+
+		// 一定時間ごとにレベルアップ
+		this.intervalID = setInterval(function() {
+			self.flare('levelUp');
+		}, 15 * 1000);
 	}
 });
 /*
